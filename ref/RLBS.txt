@@ -1,0 +1,53 @@
+ADD TAGTABLE NAME=CLAS.POLICY.TAGS                                      
+  TAG NAME=DMG.MERGESET.ID                 POS=1         LEN=10         
+  TAG NAME=POLICY.NUMBER                   POS=1         LEN=10         
+  TAG NAME=PRODUCER.CODE                   POS=11        LEN=12         
+  TAG NAME=RATED.STATE                     POS=23        LEN=2          
+  TAG NAME=COMPANY.CODE                    POS=25        LEN=2          
+-                                                                       
+-                                                                       
+ADD STRUCTURE NAME=AGENT.STR                                            
+STRUCTURE RULE=( -                                                      
+ (1     SIM FRO SEP POR MAI FVL=FINB001 FVL=FINIREAD FVL=FINLOG) -      
+ (100    DUP FRO SEP POR MAI FVL=FIN2001 FVL=FIN20001) -                
+ (400   DUP FRO SEP POR MAI FVL=FIN1001 FVL=FIN10001 OVL=AGENT) -       
+ (111   SIM FRO CON POR MAI FVL=FIN1001 FVL=FIN10001 OVL=AGENT) -       
+ (112   SIM FRO CON POR MAI FVL=FIN1001 FVL=FIN10001 OVL=AGENT) -       
+ (200   DUP FRO SEP POR MAI FVL=FINT001 FVL=GUNTREAD))                  
+-                                                                       
+-                                                                       
+ADD STRUCTURE NAME=INSURED.STR                                          
+STRUCTURE RULE=( -                                                      
+ (1     SIM FRO SEP POR MAI FVL=FINB001 FVL=FINIREAD FVL=FINLOG) -      
+ (400   DUP FRO SEP POR MAI FVL=FIN6001 FVL=FIN60001) -                 
+ (720   DUP FRO SEP POR MAI FVL=FIN6001 FVL=FIN60001) -                 
+ (200   DUP FRO SEP POR MAI FVL=FIN6001 FVL=FIN60001) -                 
+ (100   DUP FRO SEP POR MAI FVL=FIN6001 FVL=FIN60001 OVL=INSURED) -     
+ (700   DUP FRO SEP POR MAI FVL=FIN6001 FVL=FIN60001 OVL=INSURED) -     
+ (111   SIM FRO CON POR MAI FVL=FIN6001 FVL=FIN60001 OVL=INSURED) -     
+ (200   DUP FRO SEP POR MAI FVL=FINT001 FVL=FINTREAD))                  
+-                                                                       
+-                                                                       
+ADD STRUCTURE NAME=BUREAU.STR                                           
+STRUCTURE RULE=( -                                                      
+ (1     SIM FRO SEP POR MAI FVL=FINB001 FVL=FINIREAD FVL=FINLOG) -      
+ (100   SIM FRO CON POR MAI FVL=FIN5001 FVL=FIN50001 OVL=BUREAU) -      
+ (200   DUP FRO SEP POR MAI FVL=FINT001 FVL=FINTREAD))                  
+-                                                                       
+-                                                                       
+                                                                        
+ADD GROUPTABLE NAME=INSURED.GRP.TBL                                     
+         GROUP NAME=INSURED.GRP -                                       
+          STRUCTURE=INSURED.STR -                                       
+               SORT=(I.ZIP.CODE)                                        
+-                                                                       
+-                                                                       
+ADD GROUPTABLE NAME=AGENT.GRP.TBL                                       
+         GROUP NAME=AGENT.GRP -                                         
+          STRUCTURE=AGENT.STR                                           
+-                                                                       
+-                                                                       
+ADD GROUPTABLE NAME=BUREAU.GRP.TBL                                      
+         GROUP NAME=BUREAU.GRP -                                        
+          STRUCTURE=BUREAU.STR -                                        
+               SORT=(B.RATED.STATE)                                     

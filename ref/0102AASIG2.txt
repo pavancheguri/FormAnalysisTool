@@ -1,0 +1,25 @@
+ %%%DMG2NDXBEG%%% OGL    1    48    0   48    0 LAND Cr 03/15/06 09:18
+  tag name                       length
+  |                              |     character
+  |                              |     | mandatory/optional
+  |                              |     | | delete after use
+  |                              |     | | | line end
+  |                              |     | | | | multi-data
+  |                              |     | | | | | generate
+  |                              |     | | | | | |
+  V                              V     V V V V V V
+ %DMG.C.GUN.READ.1               00033 $ O N ¢ N Y
+ %AA.CUST.NAME                   00050 $ O N ¢ N Y
+ %AA.AGT.NAME                    00050 $ O N ¢ N Y
+ %%%DMG2NDXEND%%% End of Index Lines -- Text lines follow
+ FORM
+ OGLPAG
+ LAUX01A  2006-03-15 09:18 O1FORM                            ***OVERLAY
+ OGLAEG
+                 T1DCDCFSC4T05560
+    - -  8  &
+
+    - - 8 &
+ OGLAEG
+ OGLCTX
+ %%%DMGREPLBEG%%%

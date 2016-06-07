@@ -311,7 +311,7 @@ public class MainClass  extends JFrame {
 	 */
 	public  void createAndShowGUI() {
 		//Create and set up the window.
-		mainFrame = new JFrame("Form Analysis Tool!");
+		mainFrame = new JFrame("");
 		mainFrame.setSize(100, 500);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
