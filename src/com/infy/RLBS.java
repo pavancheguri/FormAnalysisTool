@@ -12,11 +12,11 @@ public class RLBS {
 
 		String stn = "";
 		for( String rule : rules ) {
-			String[] splits = rule.split("  ");
+			String[] splits = rule.split(" ");
 			if(splits.length > 1){
 				stn = splits[0];
 				if(stn.trim().equals(dtn)){
-					return splits[1];
+					return splits[1]+" "+splits[2];
 				}
 			}
 		}

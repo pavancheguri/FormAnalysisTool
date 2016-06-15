@@ -36,24 +36,28 @@ public class FormParser {
 		List<String> fields = new ArrayList<String>();
 
 			Scanner scanner =  new Scanner(fFilePath, ENCODING.name());
-			
+			String indx = "";
 			int count = 1;
 			List<String> list = new ArrayList<String>();
 			while (scanner.hasNextLine()){
-				if( count > 10)	{	
+				if( count > 1)	{	
 					list.add(scanner.nextLine());
 				}else {
-					scanner.nextLine();
+					if(count==1){
+						indx = scanner.nextLine().substring(0,10);
+					}else {
+						scanner.nextLine();
+					}
 				}
 				count ++;				 
 			}   
 
 			for (String sp : list){
-				if(sp.contains("%%%DMG2NDXEND%%%")){
+				if(sp.contains(indx)){
 					break;
 				}
-				fields.add(sp.substring(2));
-				System.out.println(sp.substring(2));
+				fields.add(sp.substring(1));
+				System.out.println(sp.substring(1));
 			}
 		return fields;
 	}

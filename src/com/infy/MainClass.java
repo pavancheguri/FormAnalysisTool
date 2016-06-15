@@ -1,5 +1,8 @@
 package com.infy;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
@@ -9,25 +12,34 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -49,18 +61,44 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText;
 
 @SuppressWarnings("serial")
-public class MainClass  extends JFrame {
+public class MainClass  extends JFrame  {
 
 	private JFrame mainFrame;
 	private JPanel controlPanel;
 	private JPanel browsePanel;
-	private JLabel fieldsLabel;
-	private JLabel rlbsLabel;
+	private JTextPane fieldsLabel;
+	private JTextPane rlbsLabel;
 	private JButton exportButton;
 	private JLabel templateLink;
 	private JLabel referenceLink;
 	private JPanel linksPanel;
-
+	private JPanel searchPanel;
+	private JPanel fieldsPanel;
+	private JPanel rlbsPanel;
+	private JButton searchButton;
+	private JButton clearButton;
+	JComboBox<String> filesCombo = null;
+	JScrollPane filesListScrollPane =null;
+	JScrollPane fieldScrollPane =null;
+	JScrollPane rlbsScrollPane =null;
+	
+	DefaultComboBoxModel<String> members = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> updatedMembers = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> description = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> dtn = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> assigned = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> status = new DefaultComboBoxModel<String>();
+	JComboBox<String> membersCombo = new JComboBox<String>(members);
+	JComboBox<String> descCombo = new JComboBox<String>(description);
+	JComboBox<String> dtnCombo = new JComboBox<String>(dtn);
+	JComboBox<String> assignedCombo = new JComboBox<String>(assigned);
+	JComboBox<String> statusCombo = new JComboBox<String>(status);
+	JScrollPane membersScrollPane = new JScrollPane(membersCombo);
+	JScrollPane descScrollPane = new JScrollPane(descCombo); 
+	JScrollPane dtnScrollPane = new JScrollPane(dtnCombo); 
+	JScrollPane assignedScrollPane = new JScrollPane(assignedCombo); 
+	JScrollPane statusScrollPane = new JScrollPane(statusCombo);
+	
 	public MainClass(){
 		createAndShowGUI();
 	}
@@ -94,20 +132,168 @@ public class MainClass  extends JFrame {
 	private void formAnalysis(){                                    
 
 		try{
-			final DefaultComboBoxModel<String> fileNames = new DefaultComboBoxModel<String>();
-			FileParser parser = new FileParser("C:\\Temp\\EDLDUMP.txt");
-			List<com.infy.File> objs = parser.processLineByLine();
 
-			for ( com.infy.File obj : objs ){
-				fileNames.addElement(obj.getName());
+			ExcelParser excelParser = new ExcelParser("C:\\Temp\\FormsList.xlsx");
+			List<EDLFile> edlfiles = excelParser.processLineByLine();
+			Map<String,String> tagPosMap = excelParser.getTagPositions();
+			/*
+			 * FileParser parser = new FileParser("C:\\Temp\\EDLDUMP.txt");
+				List<com.infy.File> objs = parser.processLineByLine();
+
+				for ( com.infy.File obj : objs ){
+					fileNames.addElement(obj.getName());
+				}
+			 */
+
+		
+			for ( EDLFile edlfile : edlfiles){
+				members.addElement(edlfile.getMember());
+				description.addElement(edlfile.getDescription());
+				dtn.addElement(edlfile.getDtn().toString());
+				assigned.addElement(edlfile.getAssigned());
+				status.addElement(edlfile.getStatus());
 			}
+			
+			clearButton.addActionListener(new ActionListener() {
 
-			final JComboBox<String> filesCombo = new JComboBox<String>(fileNames);    
+				public void actionPerformed(ActionEvent e) { 
+
+					try{
+						
+						descCombo.setSelectedIndex(-1);
+						dtnCombo.setSelectedIndex(-1);
+						assignedCombo.setSelectedIndex(-1);
+						statusCombo.setSelectedIndex(-1);
+						System.out.println("Before-"+members.getSize());
+						if(members.getSize()==0){
+							for ( EDLFile edlfile : edlfiles){
+								members.addElement(edlfile.getMember());
+							}
+						}
+						System.out.println(members.getSize());
+						membersCombo.setModel(members);
+						filesCombo.setModel(members);
+						membersCombo.setSelectedIndex(-1);
+						
+					}catch(Exception ep){
+
+					}
+				}
+			});
+			
+			// Lay out everything
+			JPanel jpnMember= new JPanel();			
+			jpnMember.add(new JLabel("Form Name"));
+			jpnMember.add(membersScrollPane);
+			jpnMember.setLayout(new BoxLayout(jpnMember, BoxLayout.Y_AXIS));
+			
+			searchPanel.add(jpnMember);
+			
+			JPanel jpnDescription= new JPanel();			
+			jpnDescription.add(new JLabel("Description"));
+			jpnDescription.add(descScrollPane);
+			jpnDescription.setLayout(new BoxLayout(jpnDescription, BoxLayout.Y_AXIS));
+			
+			searchPanel.add(jpnDescription);
+			
+			JPanel jpndtn= new JPanel();			
+			jpndtn.add(new JLabel("DTN"));
+			jpndtn.add(dtnScrollPane);
+			jpndtn.setLayout(new BoxLayout(jpndtn, BoxLayout.Y_AXIS));
+			
+			searchPanel.add(jpndtn);
+			
+			JPanel jpnAssign= new JPanel();			
+			jpnAssign.add(new JLabel("Assigned"));
+			jpnAssign.add(assignedScrollPane);
+			jpnAssign.setLayout(new BoxLayout(jpnAssign, BoxLayout.Y_AXIS));
+			
+			searchPanel.add(jpnAssign);
+			
+			JPanel jpnStatus= new JPanel();			
+			jpnStatus.add(new JLabel("Status"));
+			jpnStatus.add(statusScrollPane);
+			jpnStatus.setLayout(new BoxLayout(jpnStatus, BoxLayout.Y_AXIS));
+			
+			searchPanel.add(jpnStatus);
+			
+			searchPanel.add(searchButton);
+			searchPanel.add(clearButton);
+
+			searchButton.addActionListener(new ActionListener() {
+
+				public void actionPerformed(ActionEvent e) { 
+
+					try{
+						if (membersCombo.getSelectedIndex() == -1 && 
+								descCombo.getSelectedIndex() == -1 &&  
+								dtnCombo.getSelectedIndex() == -1 && 
+								assignedCombo.getSelectedIndex() == -1 && 
+								statusCombo.getSelectedIndex() == -1) { //TODO
+							JOptionPane.showMessageDialog(mainFrame,"Select atleast one parameter","Warning",JOptionPane.WARNING_MESSAGE);
+						}else{
+							boolean flag = true;
+							for ( EDLFile edlfile : edlfiles){
+								if( descCombo.getSelectedIndex() !=-1 && edlfile.getDescription().equals(descCombo.getSelectedItem() )){
+									membersCombo.setSelectedItem(edlfile.getMember());
+									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
+									assignedCombo.setSelectedItem(edlfile.getAssigned());
+									statusCombo.setSelectedItem(edlfile.getStatus());
+								}
+								if( membersCombo.getSelectedIndex() !=-1 && edlfile.getMember().equals(membersCombo.getSelectedItem() )){
+									descCombo.setSelectedItem(edlfile.getDescription());
+									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
+									assignedCombo.setSelectedItem(edlfile.getAssigned());
+									statusCombo.setSelectedItem(edlfile.getStatus());
+								}
+								if( flag && dtnCombo.getSelectedIndex() !=-1 && edlfile.getDtn().toString().equals(dtnCombo.getSelectedItem() )){
+									System.out.println(edlfile.getMember().toString());
+									updatedMembers.addElement(edlfile.getMember());
+									descCombo.setSelectedItem(edlfile.getDescription());
+									assignedCombo.setSelectedItem(edlfile.getAssigned());
+									statusCombo.setSelectedItem(edlfile.getStatus());
+									flag=false;
+								}
+								if( flag && assignedCombo.getSelectedIndex() !=-1 && edlfile.getAssigned().toString().equals(assignedCombo.getSelectedItem() )){
+									System.out.println(edlfile.getMember().toString());
+									updatedMembers.addElement(edlfile.getMember());
+									descCombo.setSelectedItem(edlfile.getDescription());
+									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
+									statusCombo.setSelectedItem(edlfile.getStatus());
+									flag=false;
+								}
+								if( flag && statusCombo.getSelectedIndex() !=-1 && edlfile.getStatus().toString().equals(statusCombo.getSelectedItem() )){
+									System.out.println(edlfile.getMember().toString());
+									updatedMembers.addElement(edlfile.getMember());
+									descCombo.setSelectedItem(edlfile.getDescription());
+									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
+									assignedCombo.setSelectedItem(edlfile.getAssigned());
+									flag=false;
+								}
+							}
+							if(!flag){
+								membersCombo.removeAllItems();
+								membersCombo.setModel(updatedMembers);
+								filesCombo.removeAllItems();
+								filesCombo.setModel(updatedMembers);
+								
+								System.out.println(members.getSize());
+							}
+							
+						}
+					}catch(Exception en ){
+
+					}
+				}
+			});
+
+			
+			filesCombo = new JComboBox<String>(members);    
 			filesCombo.setSelectedIndex(0);
 
-			JScrollPane filesListScrollPane = new JScrollPane(filesCombo);  
+			filesListScrollPane = new JScrollPane(filesCombo);  
 
-			JButton showButton = new JButton("Generate");
+			JButton showButton = new JButton("Show");
 			JLabel llab= new JLabel("Select the Form Name");
 			showButton.addActionListener(new ActionListener() {
 
@@ -124,14 +310,15 @@ public class MainClass  extends JFrame {
 							}catch(Exception ex){
 								JOptionPane.showMessageDialog(mainFrame,"Form does not exists in - C:\\Temp","Warning",JOptionPane.WARNING_MESSAGE);
 							}
-
+							//d6d9df
 							if( fields != null){
 								String text ="<html>";
-								text= text+"<table border='1'><thead>"
+								text= text+"<table border='1' bgcolor='#e9ecf2'><thead>"
 										+ "<th>Tag Name</th>" 
 										+ "<th>Length</th>" 
-										+ "<th>mandatory/optional</th>"
-										+ "<th>delete after use</th>"
+										+ "<th>Mandatory/Optional</th>"
+										+ "<th>Delete after use</th>" 
+										+ "<th>Start Position</th>"
 										+ "</thead>";
 
 
@@ -159,103 +346,30 @@ public class MainClass  extends JFrame {
 											k++;
 										}
 									}
+									String temp = tagPosMap.get(flds[0]);
+									temp = temp!=null?temp:"";
+									text = text +"<td>"+ temp +"</td>";
 									text= text+"</tr>";
 									i++;
 									j=0;
 									k=0;
 								}
 								text=text+"</html><br/>";
+
+								fieldsLabel.setContentType("text/html"); // let the text pane know this is what you want
 								fieldsLabel.setText(text);
+								fieldsLabel.setEditable(false); // as before
+								fieldsLabel.setBackground(null); // this is the same as a JLabel
+								fieldsLabel.setBorder(null);
+								//fieldScrollPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS); 
+								//fieldScrollPane.add(fieldsLabel);
+								//fieldScrollPane.setBounds(50, 30, 300, 50);
+								//fieldsPanel.add(fieldScrollPane);
+								fieldsPanel.add(fieldsLabel);
+								Popup popup = new Popup();
+								popup.add(fieldsLabel);
 
-
-								linksPanel.setVisible(true);
-								templateLink.addMouseListener(new MouseAdapter() {
-									@Override
-									public void mouseClicked(MouseEvent e) {
-										try {
-
-
-											XWPFDocument docx = new XWPFDocument();
-											CTSectPr sectPr = docx.getDocument().getBody().addNewSectPr();
-											XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(docx, sectPr);
-
-											//write header content
-											CTP ctpHeader = CTP.Factory.newInstance();
-											CTR ctrHeader = ctpHeader.addNewR();
-											CTText ctHeader = ctrHeader.addNewT();
-											String headerText = fileName+" Form" ;
-											ctHeader.setStringValue(headerText);	
-											XWPFParagraph headerParagraph = new XWPFParagraph(ctpHeader, docx);
-											headerParagraph.setAlignment(ParagraphAlignment.RIGHT);
-
-											XWPFParagraph[] parsHeader = new XWPFParagraph[1];
-											parsHeader[0] = headerParagraph;
-											policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT, parsHeader);
-
-											//write footer content
-											CTP ctpFooter = CTP.Factory.newInstance();
-											CTR ctrFooter = ctpFooter.addNewR();
-											CTText ctFooter = ctrFooter.addNewT();
-											String footerText = "Created By Form Analysis Tool!";
-											ctFooter.setStringValue(footerText);	
-											XWPFParagraph footerParagraph = new XWPFParagraph(ctpFooter, docx);
-											XWPFParagraph[] parsFooter = new XWPFParagraph[1];
-											parsFooter[0] = footerParagraph;
-											policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT, parsFooter);
-
-											//write body content
-											XWPFParagraph bodyParagraph = docx.createParagraph();
-											bodyParagraph.setAlignment(ParagraphAlignment.CENTER);
-											XWPFRun tmpRun = bodyParagraph.createRun();
-											tmpRun.setBold(true);
-											tmpRun.setText("This is body content.");
-
-											FileOutputStream fos = new FileOutputStream(new File("C:\\Temp\\"+fileName+"_template.docx")); 
-											docx.write(fos);   
-											fos.close();   
-
-											Desktop.getDesktop().open(new File("C:\\Temp\\"+fileName+"_template.docx"));
-
-										} catch (IOException e1) {
-											JOptionPane.showMessageDialog(mainFrame,"Please close the docx file and try again!","Error",JOptionPane.ERROR_MESSAGE);
-											e1.printStackTrace();
-										}
-									}
-								});
-
-								referenceLink.addMouseListener(new MouseAdapter() {
-									@Override
-									public void mouseClicked(MouseEvent e) {
-										try {
-											Desktop.getDesktop().open(new File("C:\\Temp\\ref.pdf"));
-										} catch (IOException e1) {
-											e1.printStackTrace();
-										}
-									}
-								});
-
-								JTable jt=new JTable(fieldsData,fieldsHeader);  
-								exportButton.setEnabled(true);
-								exportButton.addActionListener(new ActionListener() {
-
-									public void actionPerformed(ActionEvent e) { 
-										String file =(String) filesCombo.getItemAt
-												(filesCombo.getSelectedIndex());
-
-										JFileChooser fileChooser = new JFileChooser();
-										fileChooser.setSelectedFile(new File("C:\\Temp\\"+file+"_report.xls"));
-
-										int userSelection = fileChooser.showSaveDialog(mainFrame);
-
-										if (userSelection == JFileChooser.APPROVE_OPTION) {
-											File fileToSave = fileChooser.getSelectedFile();
-											System.out.println("Save as file: " + fileToSave.getAbsolutePath());
-											fillData(jt,fileToSave);
-										}
-									}
-								});
-
-								templateLink.setText("<HTML><U>"+fileName+"_Template</U></HTML>");
+								processLinks(fileName,fieldsData,fieldsHeader);
 
 								//jScroll=new JScrollPane(jt,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);  
 
@@ -265,25 +379,37 @@ public class MainClass  extends JFrame {
 								java.util.Set<RLBS> rlbsList = rparser.processLineByLine();
 
 								String dtn = null;
-								for (com.infy.File obj : objs){
-									if(obj.getName().equals(fileName)){
-										dtn = obj.getDtn();
+								for (com.infy.EDLFile obj : edlfiles){
+									if(obj.getMember().equals(fileName)){
+										dtn = obj.getDtn().toString();
 										break;
 									}
 								}
-								text = text+"<table border='1'><tr>"
+								text = text+"<table border='1' bgcolor='#e9ecf2'><tr>"
 										+ "<th>Structure Name</th>" 
-										+ "<th>Details</th></tr>" ; 
+										+ "<th>Simplex/Duplex</th><th>Position</th></tr>" ; 
 
 								for (RLBS rlbs : rlbsList ){
 
 									String details = rlbs.getDetails(dtn) ;
 									if( details !=null  ) {
-										text=text+"<tr><td>"+ rlbs.getName() +"</td><td>"+details+"</td></tr>";
+										String[] parts = details.split(" ");
+										text=text+"<tr><td>"+ rlbs.getName() +"</td>"
+												+ "<td>"+parts[0]+"</td><td>"+parts[1]+"</td></tr>";
 									}
 								}
 								text=text+"</tbody></table></html>";
+
+								rlbsLabel.setContentType("text/html"); // let the text pane know this is what you want
 								rlbsLabel.setText(text);
+								rlbsLabel.setEditable(false); // as before
+								rlbsLabel.setBackground(null); // this is the same as a JLabel
+								rlbsLabel.setBorder(null);
+								rlbsPanel.add(rlbsLabel);
+
+								Popup popup1 = new Popup();
+								popup1.add(fieldsLabel);
+
 								//JOptionPane.showMessageDialog(null, "", "Search results",
 								//JOptionPane.INFORMATION_MESSAGE);	  
 							}
@@ -299,6 +425,7 @@ public class MainClass  extends JFrame {
 			controlPanel.add(filesListScrollPane);          
 			controlPanel.add(showButton); 
 			mainFrame.setVisible(true); 
+			mainFrame.repaint();
 		}
 		catch (Exception e){
 			JOptionPane.showMessageDialog(mainFrame,"File not found -- ' C:\\Temp\\EDLDUMP.txt '");
@@ -312,13 +439,20 @@ public class MainClass  extends JFrame {
 	public  void createAndShowGUI() {
 		//Create and set up the window.
 		mainFrame = new JFrame("");
-		mainFrame.setSize(100, 500);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		JPanel pane = new JPanel();
+		GridBagConstraints gbc = new GridBagConstraints();
 
-		fieldsLabel = new JLabel("Fields",JLabel.CENTER);
-		rlbsLabel = new JLabel("Values",JLabel.CENTER);
+		fieldsLabel = new JTextPane();
+		rlbsLabel = new JTextPane();
+
+		fieldsPanel = new JPanel();
+		rlbsPanel = new JPanel();
+
+		fieldScrollPane = new JScrollPane(fieldsLabel);
+		rlbsScrollPane = new JScrollPane(fieldsLabel);
+
 		//jScroll = new JScrollPane();
 		controlPanel = new JPanel();
 		controlPanel.setLayout(new FlowLayout());
@@ -326,23 +460,54 @@ public class MainClass  extends JFrame {
 		browsePanel.setLayout(new FlowLayout());
 
 		exportButton  = new JButton("Export to Excel");
+		searchButton  = new JButton("Search");
+		clearButton  = new JButton("Reset");
 
+		searchPanel = new JPanel();
+		searchPanel.setLayout(new FlowLayout());
+		searchPanel.setBorder(
+				BorderFactory.createCompoundBorder(
+						BorderFactory.createTitledBorder("Search"),
+						BorderFactory.createEmptyBorder(5,5,30,30)));
+		searchPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
 		pane.setLayout(new GridBagLayout());
-
-		GridBagConstraints gbc = new GridBagConstraints();
-
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.gridwidth=2;
-		gbc.weightx = 1;
-		gbc.weighty = 1;
+		gbc.gridwidth=1;
+		pane.add(searchPanel, gbc);
+
+
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.gridwidth=1;
 		pane.add(controlPanel, gbc);
 
-		gbc.gridy = 1;
+
+		fieldScrollPane = new JScrollPane(fieldsPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED); 
+		fieldScrollPane.setSize(20, 100);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		gbc.gridx = 0;
+		gbc.gridy = 2;		
 		gbc.gridwidth=1;
-		pane.add(fieldsLabel, gbc);
+		gbc.ipady=120;
+		gbc.weightx=3.0;
+		pane.add(fieldScrollPane, gbc);
+
+		rlbsScrollPane = new JScrollPane(rlbsPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED); 
+		rlbsScrollPane.setSize(20, 100);
+		gbc.gridx = 0;
+		gbc.gridy = 3;
+		gbc.ipady=120;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridwidth=1;		
+		pane.add(rlbsScrollPane, gbc);
+
+
 
 		referenceLink = new JLabel();
 		templateLink = new JLabel();
@@ -352,34 +517,24 @@ public class MainClass  extends JFrame {
 		referenceLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // To indicate the the link is click able
 		templateLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridwidth=2;
 
-		linksPanel = new JPanel(new GridLayout(2,1,0,20));
+		linksPanel = new JPanel(new GridLayout(1,3,0,0));
 
-		linksPanel.add(templateLink);
-		linksPanel.add(referenceLink);
+		gbc.gridx = 0;       //aligned with button 2		
+		gbc.gridy = 4;       //third row
+		gbc.ipady=0;
+		gbc.gridwidth = 1;   //2 columns wide
 
-		linksPanel.setVisible(false);
-		pane.add(linksPanel,gbc);
+		gbc.fill = GridBagConstraints.CENTER;
 
-		gbc.gridx = 0;
-		gbc.gridy = 2;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridwidth=2;		
-		pane.add(rlbsLabel, gbc);
 
 		exportButton.setEnabled(false);
-		gbc.fill = GridBagConstraints.CENTER;
-		gbc.weighty = 0.0;   //request any extra vertical space
-		gbc.anchor = GridBagConstraints.PAGE_END; //bottom of space
-		gbc.insets = new Insets(10,0,0,0);  //top padding
-		gbc.gridx = 0;       //aligned with button 2
-		gbc.gridwidth = 2;   //2 columns wide
-		gbc.gridy = 4;       //third row
-		pane.add(exportButton, gbc);
+		linksPanel.setVisible(false);
+		linksPanel.add(templateLink);
+		linksPanel.add(referenceLink);
+		linksPanel.add(exportButton);
+
+		pane.add(linksPanel, gbc);
 
 		pane.setBorder(
 				BorderFactory.createCompoundBorder(
@@ -389,10 +544,10 @@ public class MainClass  extends JFrame {
 		mainFrame.add(pane);
 		//Display the window.
 		mainFrame.pack();
-		mainFrame.setSize(700,500);
+		mainFrame.setSize(1000,550);
 		mainFrame.setVisible(true);
 	}
-	
+
 	/**
 	 * this Method is to fill the XL sheet with Form fields data
 	 * @param table
@@ -425,7 +580,7 @@ public class MainClass  extends JFrame {
 			workbook.write(out);
 			out.close();
 			//JOptionPane.showMessageDialog(mainFrame,"File Successfully Exported to 'C:\\Temp' Folder");
-			
+
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(mainFrame,"File not found exception.\nPlease verify the file name and file type...");
@@ -436,4 +591,95 @@ public class MainClass  extends JFrame {
 
 	}
 
+	private void processLinks(String fileName,String[][] fieldsData,String[] fieldsHeader){
+		linksPanel.setVisible(true);
+		templateLink.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				try {
+
+
+					XWPFDocument docx = new XWPFDocument();
+					CTSectPr sectPr = docx.getDocument().getBody().addNewSectPr();
+					XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(docx, sectPr);
+
+					//write header content
+					CTP ctpHeader = CTP.Factory.newInstance();
+					CTR ctrHeader = ctpHeader.addNewR();
+					CTText ctHeader = ctrHeader.addNewT();
+					String headerText = fileName+" Form" ;
+					ctHeader.setStringValue(headerText);	
+					XWPFParagraph headerParagraph = new XWPFParagraph(ctpHeader, docx);
+					headerParagraph.setAlignment(ParagraphAlignment.RIGHT);
+
+					XWPFParagraph[] parsHeader = new XWPFParagraph[1];
+					parsHeader[0] = headerParagraph;
+					policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT, parsHeader);
+
+					//write footer content
+					CTP ctpFooter = CTP.Factory.newInstance();
+					CTR ctrFooter = ctpFooter.addNewR();
+					CTText ctFooter = ctrFooter.addNewT();
+					String footerText = "Created By Form Analysis Tool!";
+					ctFooter.setStringValue(footerText);	
+					XWPFParagraph footerParagraph = new XWPFParagraph(ctpFooter, docx);
+					XWPFParagraph[] parsFooter = new XWPFParagraph[1];
+					parsFooter[0] = footerParagraph;
+					policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT, parsFooter);
+
+					//write body content
+					XWPFParagraph bodyParagraph = docx.createParagraph();
+					bodyParagraph.setAlignment(ParagraphAlignment.CENTER);
+					XWPFRun tmpRun = bodyParagraph.createRun();
+					tmpRun.setBold(true);
+					tmpRun.setText("This is body content.");
+
+					FileOutputStream fos = new FileOutputStream(new File("C:\\Temp\\"+fileName+"_template.docx")); 
+					docx.write(fos);   
+					fos.close();   
+
+					Desktop.getDesktop().open(new File("C:\\Temp\\"+fileName+"_template.docx"));
+
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(mainFrame,"Please close the docx file and try again!","Error",JOptionPane.ERROR_MESSAGE);
+					e1.printStackTrace();
+				}
+			}
+		});
+
+		referenceLink.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				try {
+					Desktop.getDesktop().open(new File("C:\\Temp\\ref.pdf"));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+
+		JTable jt=new JTable(fieldsData,fieldsHeader);  
+		exportButton.setEnabled(true);
+		exportButton.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) { 
+				String file =(String) filesCombo.getItemAt
+						(filesCombo.getSelectedIndex());
+
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setSelectedFile(new File("C:\\Temp\\"+file+"_report.xls"));
+
+				int userSelection = fileChooser.showSaveDialog(mainFrame);
+
+				if (userSelection == JFileChooser.APPROVE_OPTION) {
+					File fileToSave = fileChooser.getSelectedFile();
+					System.out.println("Save as file: " + fileToSave.getAbsolutePath());
+					fillData(jt,fileToSave);
+				}
+			}
+		});
+
+		templateLink.setText("<HTML><U>"+fileName+"_Template</U></HTML>");
+
+	}
 }

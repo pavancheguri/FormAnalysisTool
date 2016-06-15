@@ -27,7 +27,9 @@ public class RLBSParser {
 	  
 	public static void main(String... aArgs) throws IOException {
 	  RLBSParser parser = new RLBSParser("RLBS.txt");
-	  parser.processLineByLine();
+	  for(RLBS rlbs: parser.processLineByLine()){
+		System.out.println(rlbs.getName());  
+	  }
 	  log("Done.");
 	}
   
@@ -38,18 +40,36 @@ public class RLBSParser {
 		Set<RLBS> rlbsList= new HashSet<RLBS>();
 
 		try {
-			Scanner scanner =  new Scanner(fFilePath, ENCODING.name());
-			
+			Scanner scanner =  new Scanner(fFilePath, ENCODING.name()).useDelimiter("\\Z");
+			String content = new Scanner(fFilePath).useDelimiter("\\Z").next();
 			int count = 1;
 			List<String> list = new ArrayList<String>();
+			StringBuffer sb = new StringBuffer();
+			//System.out.println(content);
 			while (scanner.hasNextLine()){
-				if( count > 8)	{	
-					list.add(scanner.nextLine());
+				if( count > 8)	{
+					String s = scanner.nextLine();
+					list.add(s.substring(0, s.length()-8));
+					//System.out.println(s);
+					//sb.append(s);
+					//System.out.println(sb.toString());
 				}else {
-					scanner.nextLine();
+					String s = scanner.nextLine();
+					//sb.append(s);
 				}
+				
 				count ++;				 
 			}   
+//			(?<=ADD\\s+STRUCTURE\\s+NAME=).*?(?=\) 
+			//System.out.println(Pattern.quote("STRUCTURE NAME=") );
+			/*String regexString = "(?s)(ADD\\s+STRUCTURE\\sNAME=)(.*?)\\s";
+			 Pattern pattern = Pattern.compile(regexString);
+		        Matcher matcher = pattern.matcher(content);
+		        System.out.println(matcher.find()+"----"+matcher.groupCount());
+		        if(matcher.find()){
+		        		//System.out.println(matcher.group(0));
+		        		//System.out.println(matcher.group(1));
+		        }*/
 			
 			RLBS rlbs = null;
 			Set<String> rules = null;
@@ -57,18 +77,21 @@ public class RLBSParser {
 			boolean flag =false;
 			for (String sp : list){
 				
-				if(sp.contains("ADD STRUCTURE NAME=")){
+				if(sp.trim().contains("ADD    STRUCTURE NAME=")){
 					rlbs = new RLBS();
 					rules = (Set<String>) new HashSet<String>();
-					rlbs.setName(sp.substring(19));
-					System.out.println(sp.substring(19));
+					String[] names = sp.split("=");
+					rlbs.setName(names[1].substring(0,names[1].lastIndexOf(" ")));
+					System.out.println(names[1].substring(0,names[1].lastIndexOf(" ")));
 					flag = true;
-				}else if( flag && sp.contains("STRUCTURE RULE=")){
-					System.out.println(sp);
+				}else if( flag && sp.trim().contains("STRUCTURE RULE=( ")){
+					//System.out.println(sp.trim());
+					
+					rules.add(sp.trim().substring(18));
 					flag=true;
 				}else if ( flag && !sp.trim().equals("-")){
-					rules.add(sp.substring(2));
-					System.out.println(sp.substring(2));
+					rules.add(sp.trim().substring(1));
+					//System.out.println(sp.trim().substring(2));
 				}else{
 					if( rlbs != null && rules !=null ){
 						rlbs.setRules(rules);;
@@ -87,7 +110,7 @@ public class RLBSParser {
    
   
   private static void log(Object aObject){
-    System.out.println(String.valueOf(aObject));
+    //System.out.println(String.valueOf(aObject));
   }
   
   private String quote(String aText){

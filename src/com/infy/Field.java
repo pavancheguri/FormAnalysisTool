@@ -10,6 +10,7 @@ public class Field {
 	private String delAfterUse;
 	private String endLine;
 	private String generate;
+	private String startPostion;
 	public String getRef() {
 		return ref;
 	}
@@ -57,6 +58,12 @@ public class Field {
 	}
 	public void setGenerate(String generate) {
 		this.generate = generate;
+	}
+	public String getStartPostion() {
+		return startPostion;
+	}
+	public void setStartPostion(String startPostion) {
+		this.startPostion = startPostion;
 	}
 }
 
