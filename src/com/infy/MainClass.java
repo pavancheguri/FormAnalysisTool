@@ -6,6 +6,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -14,6 +15,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -27,6 +31,7 @@ import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -36,6 +41,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -81,7 +87,7 @@ public class MainClass  extends JFrame  {
 	JScrollPane filesListScrollPane =null;
 	JScrollPane fieldScrollPane =null;
 	JScrollPane rlbsScrollPane =null;
-	
+
 	DefaultComboBoxModel<String> members = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> updatedMembers = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> description = new DefaultComboBoxModel<String>();
@@ -98,7 +104,7 @@ public class MainClass  extends JFrame  {
 	JScrollPane dtnScrollPane = new JScrollPane(dtnCombo); 
 	JScrollPane assignedScrollPane = new JScrollPane(assignedCombo); 
 	JScrollPane statusScrollPane = new JScrollPane(statusCombo);
-	
+
 	public MainClass(){
 		createAndShowGUI();
 	}
@@ -145,78 +151,347 @@ public class MainClass  extends JFrame  {
 				}
 			 */
 
-		
-			for ( EDLFile edlfile : edlfiles){
-				members.addElement(edlfile.getMember());
-				description.addElement(edlfile.getDescription());
-				dtn.addElement(edlfile.getDtn().toString());
-				assigned.addElement(edlfile.getAssigned());
-				status.addElement(edlfile.getStatus());
-			}
-			
+			resetAll(edlfiles);
+
+
 			clearButton.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) { 
 
 					try{
-						
+
 						descCombo.setSelectedIndex(-1);
 						dtnCombo.setSelectedIndex(-1);
 						assignedCombo.setSelectedIndex(-1);
 						statusCombo.setSelectedIndex(-1);
-						System.out.println("Before-"+members.getSize());
-						if(members.getSize()==0){
-							for ( EDLFile edlfile : edlfiles){
-								members.addElement(edlfile.getMember());
-							}
-						}
-						System.out.println(members.getSize());
+						membersCombo.setSelectedIndex(-1);
+						resetAll(edlfiles);
 						membersCombo.setModel(members);
 						filesCombo.setModel(members);
-						membersCombo.setSelectedIndex(-1);
-						
+						descCombo.setModel(description);
+						dtnCombo.setModel(dtn);
+						assignedCombo.setModel(assigned);
+						statusCombo.setModel(status);
+
 					}catch(Exception ep){
 
 					}
 				}
 			});
-			
+
+			JPanel filterPanel= new JPanel();
+			filterPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			JRadioButton radForm = new JRadioButton("Form Name");
+			JRadioButton radDesc = new JRadioButton("Description");
+			JRadioButton radDtn = new JRadioButton("DTN");
+			JRadioButton radAssign= new JRadioButton("Assigned");
+			JRadioButton radStatus = new JRadioButton("Status");
+			JRadioButton radAll = new JRadioButton("All",true);
+			JLabel  searchlabel= new JLabel("        ", JLabel.LEFT);
+			final JTextField searchText = new JTextField(10);
+			searchText.setText("*");
+			searchText.setEnabled(false);
+			JButton filterButton = new JButton("Filter");
+			filterButton.setEnabled(false);
+
+			JLabel statusLabel = new JLabel();
+
+			radForm.setMnemonic(KeyEvent.VK_C);
+			radDesc.setMnemonic(KeyEvent.VK_M);
+			radDtn.setMnemonic(KeyEvent.VK_P);
+
+			radForm.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {         
+					searchlabel.setText("<html><b><font color='blue'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +radForm.getText()+":</font></b></html>");
+					searchText.setEnabled(true);
+					filterButton.setEnabled(true);
+					membersCombo.setEnabled(true);
+					descCombo.setEnabled(false);
+					dtnCombo.setEnabled(false);
+					assignedCombo.setEnabled(false);
+					statusCombo.setEnabled(false);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+					searchText.setText("*");
+
+				}           
+			});
+
+			radDesc.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {             
+					searchlabel.setText("<html><b><font color='blue'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; " +radDesc.getText()+":</font></b></html>");
+					searchText.setEnabled(true);
+					filterButton.setEnabled(true);
+					membersCombo.setEnabled(false);
+					descCombo.setEnabled(true);
+					dtnCombo.setEnabled(false);
+					assignedCombo.setEnabled(false);
+					statusCombo.setEnabled(false);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+					searchText.setText("*");
+
+				}           
+			});
+
+			radDtn.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {             
+					searchlabel.setText("<html><b><font color='blue'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +radDtn.getText()+":</font></b></html>");
+					searchText.setEnabled(true);
+					filterButton.setEnabled(true);
+					membersCombo.setEnabled(false);
+					descCombo.setEnabled(false);
+					dtnCombo.setEnabled(true);
+					assignedCombo.setEnabled(false);
+					statusCombo.setEnabled(false);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+					searchText.setText("*");
+
+				}           
+			});
+
+			radAssign.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {             
+					searchlabel.setText("<html><b><font color='blue'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" +radAssign.getText()+":</font></b></html>");
+					//searchlabel.setFont(new Font(searchlabel.getFont().getFontName(), Font.BOLD, searchlabel.getFont().getSize()));;
+					searchText.setEnabled(true);
+					filterButton.setEnabled(true);
+					membersCombo.setEnabled(false);
+					descCombo.setEnabled(false);
+					dtnCombo.setEnabled(false);
+					assignedCombo.setEnabled(true);
+					statusCombo.setEnabled(false);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+					searchText.setText("*");
+				}           
+			});
+
+			radStatus.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {             
+					searchlabel.setText("<html><b><font color='blue'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; " +radStatus.getText()+":</font></b></html>");
+					searchText.setEnabled(true);
+					filterButton.setEnabled(true);
+					membersCombo.setEnabled(false);
+					descCombo.setEnabled(false);
+					dtnCombo.setEnabled(false);
+					assignedCombo.setEnabled(false);
+					statusCombo.setEnabled(true);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+					searchText.setText("*");
+
+				}           
+			});
+
+			radAll.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					searchlabel.setText("        ");
+					searchText.setText("*");
+					searchText.setEnabled(false);
+					filterButton.setEnabled(false);
+					membersCombo.setEnabled(true);
+					descCombo.setEnabled(true);
+					dtnCombo.setEnabled(true);
+					assignedCombo.setEnabled(true);
+					statusCombo.setEnabled(true);
+					searchButton.setEnabled(true);
+					clearButton.setEnabled(true);
+
+					resetAll(edlfiles);
+					membersCombo.setModel(members);
+					filesCombo.setModel(members);
+					descCombo.setModel(description);
+					dtnCombo.setModel(dtn);
+					assignedCombo.setModel(assigned);
+					statusCombo.setModel(status);
+
+				}           
+			});
+
+			filterButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {     
+					DefaultComboBoxModel<String> temp = new DefaultComboBoxModel<String>();
+					if(searchlabel.getText().contains("Form Name:")){
+						if(searchText.getText().trim().equals("*")){
+							resetAll(edlfiles);
+							membersCombo.setModel(members);
+							filesCombo.setModel(members);
+							descCombo.setModel(description);
+							dtnCombo.setModel(dtn);
+							assignedCombo.setModel(assigned);
+							statusCombo.setModel(status);
+						}else{
+							for( int i=0; i<members.getSize();i++){
+								if(members.getElementAt(i).toUpperCase().contains(searchText.getText().toUpperCase())){
+									temp.addElement(members.getElementAt(i));
+								}
+							}
+							membersCombo.removeAllItems();
+							membersCombo.setModel(temp);
+							members=temp;
+						}
+					}
+
+					if(searchlabel.getText().contains("Description:")){
+						if(searchText.getText().trim().equals("*")){
+							resetAll(edlfiles);
+							membersCombo.setModel(members);
+							filesCombo.setModel(members);
+							descCombo.setModel(description);
+							dtnCombo.setModel(dtn);
+							assignedCombo.setModel(assigned);
+							statusCombo.setModel(status);
+						}else{
+							for( int i=0; i<description.getSize();i++){
+								if(description.getElementAt(i).contains(searchText.getText().toUpperCase())){
+									temp.addElement(description.getElementAt(i));
+								}
+							}
+							descCombo.removeAllItems();
+							descCombo.setModel(temp);
+							description=temp;
+						}
+					}
+					if(searchlabel.getText().contains("DTN:")){
+						if(searchText.getText().trim().equals("*")){
+							resetAll(edlfiles);
+							membersCombo.setModel(members);
+							filesCombo.setModel(members);
+							descCombo.setModel(description);
+							dtnCombo.setModel(dtn);
+							assignedCombo.setModel(assigned);
+							statusCombo.setModel(status);
+						}else{
+							for( int i=0; i<dtn.getSize();i++){
+								if(dtn.getElementAt(i).contains(searchText.getText())){
+									temp.addElement(dtn.getElementAt(i));
+								}
+							}
+							dtnCombo.removeAllItems();
+							dtnCombo.setModel(temp);
+							dtn=temp;
+						}
+					}
+					if(searchlabel.getText().contains("Assigned:")){
+						if(searchText.getText().trim().equals("*")){
+							resetAll(edlfiles);
+							membersCombo.setModel(members);
+							filesCombo.setModel(members);
+							descCombo.setModel(description);
+							dtnCombo.setModel(dtn);
+							assignedCombo.setModel(assigned);
+							statusCombo.setModel(status);
+						}else{
+							for( int i=0; i<assigned.getSize();i++){
+								if(assigned.getElementAt(i).toUpperCase().contains(searchText.getText().toUpperCase())){
+									temp.addElement(assigned.getElementAt(i));
+								}
+							}
+							assignedCombo.removeAllItems();
+							assignedCombo.setModel(temp);
+							assigned=temp;
+						}
+					}
+					if(searchlabel.getText().contains("Status:")){
+						if(searchText.getText().trim().equals("*")){
+							resetAll(edlfiles);
+							membersCombo.setModel(members);
+							filesCombo.setModel(members);
+							descCombo.setModel(description);
+							dtnCombo.setModel(dtn);
+							assignedCombo.setModel(assigned);
+							statusCombo.setModel(status);
+						}else{
+							for( int i=0; i<status.getSize();i++){
+								if(status.getElementAt(i).toUpperCase().contains(searchText.getText().toUpperCase())){
+									temp.addElement(status.getElementAt(i));
+								}
+							}
+							statusCombo.removeAllItems();
+							statusCombo.setModel(temp);
+							status=temp;
+						}
+					}
+
+
+
+
+
+				}
+			});
+
+			searchText.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					try {
+						if(searchText.getText().trim().equalsIgnoreCase("*")) searchText.setText("");
+					}catch(Exception et){
+
+					}
+				}
+			});
+
+			//Group the radio buttons.
+			ButtonGroup group = new ButtonGroup();
+			group.add(radAll);
+			group.add(radForm);
+			group.add(radDesc);
+			group.add(radDtn);
+			group.add(radAssign);
+			group.add(radStatus);
+
+			filterPanel.add(radAll); 
+			filterPanel.add(radForm);
+			filterPanel.add(radDesc);
+			filterPanel.add(radDtn); 
+			filterPanel.add(radAssign);
+			filterPanel.add(radStatus);
+
+			filterPanel.add(searchlabel); 
+			filterPanel.add(searchText);
+			filterPanel.add(filterButton); 
+			filterPanel.setBorder(BorderFactory.createTitledBorder("<html><font color='blue'>Filter Criteria</font></html>"));
+			searchPanel.add(filterPanel);
+
+
 			// Lay out everything
 			JPanel jpnMember= new JPanel();			
 			jpnMember.add(new JLabel("Form Name"));
 			jpnMember.add(membersScrollPane);
 			jpnMember.setLayout(new BoxLayout(jpnMember, BoxLayout.Y_AXIS));
-			
+
 			searchPanel.add(jpnMember);
-			
+
 			JPanel jpnDescription= new JPanel();			
 			jpnDescription.add(new JLabel("Description"));
 			jpnDescription.add(descScrollPane);
 			jpnDescription.setLayout(new BoxLayout(jpnDescription, BoxLayout.Y_AXIS));
-			
+
 			searchPanel.add(jpnDescription);
-			
+
 			JPanel jpndtn= new JPanel();			
 			jpndtn.add(new JLabel("DTN"));
 			jpndtn.add(dtnScrollPane);
 			jpndtn.setLayout(new BoxLayout(jpndtn, BoxLayout.Y_AXIS));
-			
+
 			searchPanel.add(jpndtn);
-			
+
 			JPanel jpnAssign= new JPanel();			
 			jpnAssign.add(new JLabel("Assigned"));
 			jpnAssign.add(assignedScrollPane);
 			jpnAssign.setLayout(new BoxLayout(jpnAssign, BoxLayout.Y_AXIS));
-			
+
 			searchPanel.add(jpnAssign);
-			
+
 			JPanel jpnStatus= new JPanel();			
 			jpnStatus.add(new JLabel("Status"));
 			jpnStatus.add(statusScrollPane);
 			jpnStatus.setLayout(new BoxLayout(jpnStatus, BoxLayout.Y_AXIS));
-			
+
 			searchPanel.add(jpnStatus);
-			
+
 			searchPanel.add(searchButton);
 			searchPanel.add(clearButton);
 
@@ -276,10 +551,10 @@ public class MainClass  extends JFrame  {
 								membersCombo.setModel(updatedMembers);
 								filesCombo.removeAllItems();
 								filesCombo.setModel(updatedMembers);
-								
+
 								System.out.println(members.getSize());
 							}
-							
+
 						}
 					}catch(Exception en ){
 
@@ -287,7 +562,7 @@ public class MainClass  extends JFrame  {
 				}
 			});
 
-			
+
 			filesCombo = new JComboBox<String>(members);    
 			filesCombo.setSelectedIndex(0);
 
@@ -313,13 +588,13 @@ public class MainClass  extends JFrame  {
 							//d6d9df
 							if( fields != null){
 								String text ="<html>";
-								text= text+"<table border='1' bgcolor='#e9ecf2'><thead>"
+								text= text+"<table border='1' bgcolor='#e9ecf2'><tr style='color:#000080'>"
 										+ "<th>Tag Name</th>" 
 										+ "<th>Length</th>" 
 										+ "<th>Mandatory/Optional</th>"
 										+ "<th>Delete after use</th>" 
 										+ "<th>Start Position</th>"
-										+ "</thead>";
+										+ "</tr>";
 
 
 								String[] fieldsHeader = {"Tag Name","Length", 
@@ -385,7 +660,7 @@ public class MainClass  extends JFrame  {
 										break;
 									}
 								}
-								text = text+"<table border='1' bgcolor='#e9ecf2'><tr>"
+								text = text+"<table border='1' bgcolor='#e9ecf2'><tr style='color:#000080'>"
 										+ "<th>Structure Name</th>" 
 										+ "<th>Simplex/Duplex</th><th>Position</th></tr>" ; 
 
@@ -464,11 +739,11 @@ public class MainClass  extends JFrame  {
 		clearButton  = new JButton("Reset");
 
 		searchPanel = new JPanel();
-		searchPanel.setLayout(new FlowLayout());
+		searchPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		searchPanel.setBorder(
-				BorderFactory.createCompoundBorder(
-						BorderFactory.createTitledBorder("Search"),
-						BorderFactory.createEmptyBorder(5,5,30,30)));
+				BorderFactory.createCompoundBorder( 
+						BorderFactory.createTitledBorder("<html><font color='#000080'>Search</font></html>"),
+						BorderFactory.createEmptyBorder(0,0,75,0)));
 		searchPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
 		pane.setLayout(new GridBagLayout());
 		gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -511,14 +786,14 @@ public class MainClass  extends JFrame  {
 
 		referenceLink = new JLabel();
 		templateLink = new JLabel();
-		referenceLink.setText("<HTML><U>Sample Reference</U></HTML>");
-		templateLink.setText("<HTML><U>Template</U></HTML>");
+		referenceLink.setText("<HTML><U><font color='green'>Sample Reference</font></U></HTML>");
+		templateLink.setText("<HTML><U><font color='blue'>Template</font></U></HTML>");
 
 		referenceLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // To indicate the the link is click able
 		templateLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
 
-		linksPanel = new JPanel(new GridLayout(1,3,0,0));
+		linksPanel = new JPanel(new GridLayout(1,3,20,10));
 
 		gbc.gridx = 0;       //aligned with button 2		
 		gbc.gridy = 4;       //third row
@@ -538,13 +813,13 @@ public class MainClass  extends JFrame  {
 
 		pane.setBorder(
 				BorderFactory.createCompoundBorder(
-						BorderFactory.createTitledBorder("Form Analysis Tool"),
-						BorderFactory.createEmptyBorder(10,10,10,10)));
+						BorderFactory.createTitledBorder("<html><font color='#FF4500'>Form Analysis Tool</font></html>"),
+						BorderFactory.createEmptyBorder(20,20,40,40)));
 		//pane.add(controlPanel);
 		mainFrame.add(pane);
 		//Display the window.
 		mainFrame.pack();
-		mainFrame.setSize(1000,550);
+		mainFrame.setSize(1000,650);
 		mainFrame.setVisible(true);
 	}
 
@@ -679,7 +954,22 @@ public class MainClass  extends JFrame  {
 			}
 		});
 
-		templateLink.setText("<HTML><U>"+fileName+"_Template</U></HTML>");
+		templateLink.setText("<HTML><U><b><font color='blue'>"+fileName+"_Template</font></b></U></HTML>");
 
+	}
+	private void resetAll(List<EDLFile> edlfiles){
+		for ( EDLFile edlfile : edlfiles){
+			members.addElement(edlfile.getMember());
+			description.addElement(edlfile.getDescription());
+			if(dtn.getIndexOf(edlfile.getDtn().toString())==-1){
+				dtn.addElement(edlfile.getDtn().toString());
+			}
+			if(assigned.getIndexOf(edlfile.getAssigned().toString())==-1){
+				assigned.addElement(edlfile.getAssigned());
+			}
+			if(status.getIndexOf(edlfile.getStatus().toString())==-1){
+				status.addElement(edlfile.getStatus());
+			}
+		}
 	}
 }
