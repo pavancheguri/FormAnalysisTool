@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -33,12 +34,12 @@ public class FormParser {
   
   /** Template method that calls {@link #processLine(String)}.  */
 	public List<String> processLineByLine() throws Exception {
-		List<String> fields = new ArrayList<String>();
+		List<String> fields = new LinkedList<String>();
 
 			Scanner scanner =  new Scanner(fFilePath, ENCODING.name());
 			String indx = "";
 			int count = 1;
-			List<String> list = new ArrayList<String>();
+			List<String> list = new LinkedList<String>();
 			while (scanner.hasNextLine()){
 				if( count > 1)	{	
 					list.add(scanner.nextLine());

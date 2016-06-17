@@ -6,13 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /** Assumes UTF-8 encoding. JDK 7+. */
 public class RLBSParser {
@@ -37,7 +34,7 @@ public class RLBSParser {
   
   /** Template method that calls {@link #processLine(String)}.  */
 	public Set<RLBS> processLineByLine() throws IOException {
-		Set<RLBS> rlbsList= new HashSet<RLBS>();
+		Set<RLBS> rlbsList= new LinkedHashSet<RLBS>();
 
 		try {
 			Scanner scanner =  new Scanner(fFilePath, ENCODING.name()).useDelimiter("\\Z");
@@ -79,7 +76,7 @@ public class RLBSParser {
 				
 				if(sp.trim().contains("ADD    STRUCTURE NAME=")){
 					rlbs = new RLBS();
-					rules = (Set<String>) new HashSet<String>();
+					rules = (Set<String>) new LinkedHashSet<String>();
 					String[] names = sp.split("=");
 					rlbs.setName(names[1].substring(0,names[1].lastIndexOf(" ")));
 					System.out.println(names[1].substring(0,names[1].lastIndexOf(" ")));

@@ -1,5 +1,6 @@
 package com.infy;
 
+import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -7,10 +8,15 @@ import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.MouseInfo;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -21,14 +27,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -52,11 +63,14 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.TableModel;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
+import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -181,6 +195,8 @@ public class MainClass  extends JFrame  {
 
 			JPanel filterPanel= new JPanel();
 			filterPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+			JPanel searchFilter= new JPanel();
+			searchFilter.setLayout(new FlowLayout(FlowLayout.CENTER));
 			JRadioButton radForm = new JRadioButton("Form Name");
 			JRadioButton radDesc = new JRadioButton("Description");
 			JRadioButton radDtn = new JRadioButton("DTN");
@@ -462,39 +478,40 @@ public class MainClass  extends JFrame  {
 			jpnMember.add(membersScrollPane);
 			jpnMember.setLayout(new BoxLayout(jpnMember, BoxLayout.Y_AXIS));
 
-			searchPanel.add(jpnMember);
+			searchFilter.add(jpnMember);
 
 			JPanel jpnDescription= new JPanel();			
 			jpnDescription.add(new JLabel("Description"));
 			jpnDescription.add(descScrollPane);
 			jpnDescription.setLayout(new BoxLayout(jpnDescription, BoxLayout.Y_AXIS));
 
-			searchPanel.add(jpnDescription);
+			searchFilter.add(jpnDescription);
 
 			JPanel jpndtn= new JPanel();			
 			jpndtn.add(new JLabel("DTN"));
 			jpndtn.add(dtnScrollPane);
 			jpndtn.setLayout(new BoxLayout(jpndtn, BoxLayout.Y_AXIS));
 
-			searchPanel.add(jpndtn);
+			searchFilter.add(jpndtn);
 
 			JPanel jpnAssign= new JPanel();			
 			jpnAssign.add(new JLabel("Assigned"));
 			jpnAssign.add(assignedScrollPane);
 			jpnAssign.setLayout(new BoxLayout(jpnAssign, BoxLayout.Y_AXIS));
 
-			searchPanel.add(jpnAssign);
+			searchFilter.add(jpnAssign);
 
 			JPanel jpnStatus= new JPanel();			
 			jpnStatus.add(new JLabel("Status"));
 			jpnStatus.add(statusScrollPane);
 			jpnStatus.setLayout(new BoxLayout(jpnStatus, BoxLayout.Y_AXIS));
 
-			searchPanel.add(jpnStatus);
-
-			searchPanel.add(searchButton);
-			searchPanel.add(clearButton);
-
+			searchFilter.add(jpnStatus);
+			JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			buttonsPanel.add(searchButton);
+			buttonsPanel.add(clearButton);
+			searchPanel.add(searchFilter);
+			searchPanel.add(buttonsPanel);
 			searchButton.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) { 
@@ -695,7 +712,8 @@ public class MainClass  extends JFrame  {
 					}
 				}
 			}); 
-
+			
+			
 			controlPanel.add(llab);
 			controlPanel.add(filesListScrollPane);          
 			controlPanel.add(showButton); 
@@ -739,17 +757,16 @@ public class MainClass  extends JFrame  {
 		clearButton  = new JButton("Reset");
 
 		searchPanel = new JPanel();
-		searchPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+		searchPanel.setLayout(new BoxLayout(searchPanel,BoxLayout.Y_AXIS));
 		searchPanel.setBorder(
 				BorderFactory.createCompoundBorder( 
 						BorderFactory.createTitledBorder("<html><font color='#000080'>Search</font></html>"),
-						BorderFactory.createEmptyBorder(0,0,75,0)));
-		searchPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+						BorderFactory.createEmptyBorder(0,0,0,0)));
 		pane.setLayout(new GridBagLayout());
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.gridwidth=1;
+		gbc.weightx=2.0;
 		pane.add(searchPanel, gbc);
 
 
@@ -769,7 +786,7 @@ public class MainClass  extends JFrame  {
 		gbc.gridy = 2;		
 		gbc.gridwidth=1;
 		gbc.ipady=120;
-		gbc.weightx=3.0;
+		//gbc.weightx=3.0;
 		pane.add(fieldScrollPane, gbc);
 
 		rlbsScrollPane = new JScrollPane(rlbsPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
@@ -777,7 +794,6 @@ public class MainClass  extends JFrame  {
 		rlbsScrollPane.setSize(20, 100);
 		gbc.gridx = 0;
 		gbc.gridy = 3;
-		gbc.ipady=120;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridwidth=1;		
 		pane.add(rlbsScrollPane, gbc);
@@ -814,13 +830,14 @@ public class MainClass  extends JFrame  {
 		pane.setBorder(
 				BorderFactory.createCompoundBorder(
 						BorderFactory.createTitledBorder("<html><font color='#FF4500'>Form Analysis Tool</font></html>"),
-						BorderFactory.createEmptyBorder(20,20,40,40)));
+						BorderFactory.createEmptyBorder(0,0,0,0)));
 		//pane.add(controlPanel);
 		mainFrame.add(pane);
 		//Display the window.
 		mainFrame.pack();
 		mainFrame.setSize(1000,650);
 		mainFrame.setVisible(true);
+		//mainFrame.setResizable(false);
 	}
 
 	/**
@@ -908,6 +925,21 @@ public class MainClass  extends JFrame  {
 					XWPFRun tmpRun = bodyParagraph.createRun();
 					tmpRun.setBold(true);
 					tmpRun.setText("This is body content.");
+					Robot robot =new Robot();
+					
+					Rectangle bounds = MouseInfo.getPointerInfo().getDevice().getDefaultConfiguration().getBounds();
+					robot.keyPress(KeyEvent.VK_ALT);
+				    robot.keyPress(KeyEvent.VK_PRINTSCREEN);
+					BufferedImage image = robot.createScreenCapture(bounds);
+					
+				    robot.keyRelease(KeyEvent.VK_PRINTSCREEN);
+				    robot.keyRelease(KeyEvent.VK_ALT);
+							//new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
+					
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					ImageIO.write(image, "png", baos);
+					InputStream is = new ByteArrayInputStream(baos.toByteArray());
+					//docx.createParagraph().createRun().addPicture(is, Document.PICTURE_TYPE_JPEG, "my pic", Units.toEMU(500), Units.toEMU(500));
 
 					FileOutputStream fos = new FileOutputStream(new File("C:\\Temp\\"+fileName+"_template.docx")); 
 					docx.write(fos);   
@@ -917,6 +949,9 @@ public class MainClass  extends JFrame  {
 
 				} catch (IOException e1) {
 					JOptionPane.showMessageDialog(mainFrame,"Please close the docx file and try again!","Error",JOptionPane.ERROR_MESSAGE);
+					e1.printStackTrace();
+				} catch (AWTException e1) {
+					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
