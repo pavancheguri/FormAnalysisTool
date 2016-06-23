@@ -43,7 +43,7 @@ public class ExcelParser {
 			edlfile.setRowNum(j);
 			edlfile.setMember(row.getCell(0).toString().substring(0, row.getCell(0).toString().length() - 3));//Member Name i.e, File Name
 			edlfile.setDescription(row.getCell(1).getStringCellValue());
-			edlfile.setDtn((int)row.getCell(2).getNumericCellValue());
+			edlfile.setDtn((int)(row.getCell(2).getNumericCellValue()));
 			edlfile.setAssigned(row.getCell(8)!=null?row.getCell(8).toString():"");
 			edlfile.setStatus(row.getCell(9)!=null?row.getCell(9).toString():"");
 			edlfiles.add(edlfile);
