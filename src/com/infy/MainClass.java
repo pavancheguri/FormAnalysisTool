@@ -1,45 +1,26 @@
 package com.infy;
 
-import java.awt.AWTException;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.MouseInfo;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -49,7 +30,6 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -60,25 +40,16 @@ import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.TableModel;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Utilities;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.util.Units;
-import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
-import org.apache.poi.xwpf.usermodel.Document;
-import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTP;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText;
 
 @SuppressWarnings("serial")
 public class MainClass  extends JFrame  {
@@ -87,7 +58,7 @@ public class MainClass  extends JFrame  {
 	private JPanel controlPanel;
 	private JPanel browsePanel;
 	private JTextPane fieldsLabel;
-	private JTextPane rlbsLabel;
+	private JTextPaneTip rlbsLabel;
 	private JButton exportButton;
 	private JLabel templateLink;
 	private JLabel referenceLink;
@@ -101,13 +72,20 @@ public class MainClass  extends JFrame  {
 	JScrollPane filesListScrollPane =null;
 	JScrollPane fieldScrollPane =null;
 	JScrollPane rlbsScrollPane =null;
+	private String fileName;
+	private String[][] fieldsData= null;
+	private String[] fieldsHeader= {"Tag Name","Length", "mandatory/optional","delete after use"};;
 
 	DefaultComboBoxModel<String> members = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> updatedMembers = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> description = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> updatedDesc = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> dtn = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> updatedDtn = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> assigned = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> updatedAssigned = new DefaultComboBoxModel<String>();
 	DefaultComboBoxModel<String> status = new DefaultComboBoxModel<String>();
+	DefaultComboBoxModel<String> updatedStatus = new DefaultComboBoxModel<String>();
 	JComboBox<String> membersCombo = new JComboBox<String>(members);
 	JComboBox<String> descCombo = new JComboBox<String>(description);
 	JComboBox<String> dtnCombo = new JComboBox<String>(dtn);
@@ -118,9 +96,10 @@ public class MainClass  extends JFrame  {
 	JScrollPane dtnScrollPane = new JScrollPane(dtnCombo); 
 	JScrollPane assignedScrollPane = new JScrollPane(assignedCombo); 
 	JScrollPane statusScrollPane = new JScrollPane(statusCombo);
+	public HashMap<String,String> toolTips = new HashMap<String,String>();
 
 	String selValue="";
-
+	
 	public MainClass(){
 		createAndShowGUI();
 	}
@@ -129,7 +108,6 @@ public class MainClass  extends JFrame  {
 		try {
 			//Metal	Nimbus	CDE/Motif	Windows	Windows Classic
 			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				System.out.println(info.getName());
 				if ("Nimbus".equals(info.getName())) {
 					UIManager.setLookAndFeel(info.getClassName());
 					break;
@@ -144,7 +122,8 @@ public class MainClass  extends JFrame  {
 				e1.printStackTrace();
 			}
 		}
-		MainClass  mainClass = new MainClass();      
+		MainClass  mainClass = new MainClass();  
+		
 		mainClass.formAnalysis();
 	}
 
@@ -158,6 +137,7 @@ public class MainClass  extends JFrame  {
 			ExcelParser excelParser = new ExcelParser("C:\\Temp\\FormsList.xlsx");
 			List<EDLFile> edlfiles = excelParser.processLineByLine();
 			Map<String,String> tagPosMap = excelParser.getTagPositions();
+			toolTips = excelParser.getToolTips();
 			/*
 			 * FileParser parser = new FileParser("C:\\Temp\\EDLDUMP.txt");
 				List<com.infy.File> objs = parser.processLineByLine();
@@ -211,8 +191,6 @@ public class MainClass  extends JFrame  {
 			searchText.setEnabled(false);
 			JButton filterButton = new JButton("Filter");
 			filterButton.setEnabled(false);
-
-			JLabel statusLabel = new JLabel();
 
 			radForm.setMnemonic(KeyEvent.VK_C);
 			radDesc.setMnemonic(KeyEvent.VK_M);
@@ -432,11 +410,6 @@ public class MainClass  extends JFrame  {
 							status=temp;
 						}
 					}
-
-
-
-
-
 				}
 			});
 
@@ -519,7 +492,6 @@ public class MainClass  extends JFrame  {
 				public void actionPerformed(ActionEvent e) {
 					selValue = "membersCombo";
 					for ( EDLFile edlfile : edlfiles){
-
 						if( membersCombo.getSelectedIndex() !=-1 && edlfile.getMember().equals(membersCombo.getSelectedItem())){
 							descCombo.setSelectedItem(edlfile.getDescription());
 							dtnCombo.setSelectedItem(edlfile.getDtn().toString());
@@ -562,7 +534,7 @@ public class MainClass  extends JFrame  {
 					selValue = "statusCombo";
 				}
 			});
-			System.out.println(selValue);
+			//System.out.println(selValue);
 
 			searchButton.addActionListener(new ActionListener() {
 
@@ -576,75 +548,82 @@ public class MainClass  extends JFrame  {
 								statusCombo.getSelectedIndex() == -1) { //TODO
 							JOptionPane.showMessageDialog(mainFrame,"Select atleast one parameter","Warning",JOptionPane.WARNING_MESSAGE);
 						}else{
-							boolean flag = true;
 							updatedMembers = new DefaultComboBoxModel<String>();
-							if(selValue.equalsIgnoreCase("membersCombo")){
-							for ( EDLFile edlfile : edlfiles){
-
-								 
-										if(membersCombo.getSelectedIndex() !=-1 && edlfile.getMember().equals(membersCombo.getSelectedItem())){
-									descCombo.setSelectedItem(edlfile.getDescription());
-									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
-									assignedCombo.setSelectedItem(edlfile.getAssigned());
-									statusCombo.setSelectedItem(edlfile.getStatus());
-								}
-							}
-							}
-							/*for ( EDLFile edlfile : edlfiles){
-								if( selValue.equalsIgnoreCase("descCombo") && 
-										descCombo.getSelectedIndex() !=-1 && edlfile.getDescription().equals(descCombo.getSelectedItem())){
-									membersCombo.setSelectedItem(edlfile.getMember());
-									dtnCombo.setSelectedItem(edlfile.getDtn().toString());
-									assignedCombo.setSelectedItem(edlfile.getAssigned());
-									statusCombo.setSelectedItem(edlfile.getStatus());
-								}
-								if( selValue.equalsIgnoreCase("dtnCombo") && 
-										dtnCombo.getSelectedIndex() !=-1 && edlfile.getDtn().equals(dtnCombo.getSelectedItem())){
-										updatedMembers.addElement(edlfile.getMember());
-
-										descCombo.setSelectedItem(edlfile.getDescription());
-										assignedCombo.setSelectedItem(edlfile.getAssigned());
-										statusCombo.setSelectedItem(edlfile.getStatus());
-									flag=false;
-								}
-								if( selValue.equalsIgnoreCase("assignedCombo") &&  
-										assignedCombo.getSelectedIndex() !=-1 && edlfile.getAssigned().toString().equals(assignedCombo.getSelectedItem() )){
-									if(updatedMembers.getIndexOf(edlfile.getMember())==-1){
-										updatedMembers.addElement(edlfile.getMember());
-										descCombo.setSelectedItem(edlfile.getDescription());
-										dtnCombo.setSelectedItem(edlfile.getDtn().toString());
-										statusCombo.setSelectedItem(edlfile.getStatus());
-										flag=false;
+							updatedDesc = new DefaultComboBoxModel<String>();
+							updatedDtn = new DefaultComboBoxModel<String>();
+							updatedAssigned = new DefaultComboBoxModel<String>();
+							updatedStatus = new DefaultComboBoxModel<String>();;
+							if(selValue.equalsIgnoreCase("dtnCombo") ){
+								String ii = dtnCombo.getSelectedItem().toString();
+								for ( int i=0;i<edlfiles.size();i++){										
+									if(edlfiles.get(i).getDtn().toString().equalsIgnoreCase(ii)){
+										if(updatedMembers.getIndexOf(edlfiles.get(i).getMember())==-1){
+											//System.out.println(edlfiles.get(i).getDtn()+ ":" +ii+":"+edlfiles.get(i).getMember());
+											updatedMembers.addElement(edlfiles.get(i).getMember());
+											updatedDesc.addElement(edlfiles.get(i).getDescription());
+											if(updatedStatus.getIndexOf(edlfiles.get(i).getStatus().toString())==-1){
+												updatedStatus.addElement(edlfiles.get(i).getStatus());
+											}
+											if(updatedAssigned.getIndexOf(edlfiles.get(i).getAssigned().toString())==-1){
+												updatedAssigned.addElement(edlfiles.get(i).getAssigned());
+											}
+										}
 									}
 								}
-								if( selValue.equalsIgnoreCase("statusCombo") &&  
-										statusCombo.getSelectedIndex() !=-1 && edlfile.getStatus().toString().equals(statusCombo.getSelectedItem() )){
-									if(updatedMembers.getIndexOf(edlfile.getMember())==-1){
-										updatedMembers.addElement(edlfile.getMember());
-										descCombo.setSelectedItem(edlfile.getDescription());
-										dtnCombo.setSelectedItem(edlfile.getDtn().toString());
-										assignedCombo.setSelectedItem(edlfile.getAssigned());
-										flag=false;
+							}else if (selValue.equalsIgnoreCase("assignedCombo") ){
+								String selValue = (String) assignedCombo.getSelectedItem() ;
+								for ( EDLFile edlfile : edlfiles){
+									if ( edlfile.getAssigned().equalsIgnoreCase(selValue) ){
+										if(updatedMembers.getIndexOf(edlfile.getMember())==-1){
+											updatedMembers.addElement(edlfile.getMember());
+											updatedDesc.addElement(edlfile.getDescription());
+											if(updatedDtn.getIndexOf(edlfile.getDtn().toString())==-1){
+												updatedDtn.addElement(edlfile.getDtn().toString());
+											}
+											if(updatedStatus.getIndexOf(edlfile.getStatus().toString())==-1){
+												updatedStatus.addElement(edlfile.getStatus());
+											}
+										}
+									}
+								}
+							}else if (selValue.equalsIgnoreCase("statusCombo") ){
+								String selValue=(String) statusCombo.getSelectedItem();
+								for ( EDLFile edlfile : edlfiles){
+									if ( edlfile.getStatus().equalsIgnoreCase(selValue )){
+										if(updatedMembers.getIndexOf(edlfile.getMember())==-1){
+											updatedMembers.addElement(edlfile.getMember());
+											updatedDesc.addElement(edlfile.getDescription());
+											if(updatedDtn.getIndexOf(edlfile.getDtn().toString())==-1){
+												updatedDtn.addElement(edlfile.getDtn().toString());
+											}	
+											if(updatedAssigned.getIndexOf(edlfile.getAssigned().toString())==-1){
+												updatedAssigned.addElement(edlfile.getAssigned());
+											}
+										}
 									}
 								}
 							}
-							if(selValue.equalsIgnoreCase("dtnCombo") || selValue.equalsIgnoreCase("assignedCombo") || selValue.equalsIgnoreCase("statusCombo")){
-								membersCombo.removeAllItems();
-								membersCombo.setModel(updatedMembers);
+							
+							if ( updatedMembers.getSize() >0){
+								//System.out.println("Size of updated list: "+updatedMembers.getSize());
 								filesCombo.removeAllItems();
 								filesCombo.setModel(updatedMembers);
-
-								System.out.println(members.getSize());
+								membersCombo.setModel(updatedMembers);
+								descCombo.removeAllItems();
+								descCombo.setModel(updatedDesc);
+								if( updatedDtn.getSize() >0 ){
+									dtnCombo.removeAllItems();
+									dtnCombo.setModel(updatedDtn);
+								}
+								if( updatedAssigned.getSize() >0){
+									assignedCombo.removeAllItems();
+									assignedCombo.setModel(updatedAssigned);
+								}
+								if( updatedStatus.getSize() >0){
+									statusCombo.removeAllItems();
+									statusCombo.setModel(updatedStatus);
+								}
 							}
-
-							resetAll(edlfiles);
-							membersCombo.setModel(members);
-							//filesCombo.setModel(members);
-							descCombo.setModel(description);
-							dtnCombo.setModel(dtn);
-							assignedCombo.setModel(assigned);
-							statusCombo.setModel(status);*/
-
 						}
 					}catch(Exception en ){
 
@@ -667,7 +646,7 @@ public class MainClass  extends JFrame  {
 					try{
 						if (filesCombo.getSelectedIndex() != -1) {                     
 
-							String fileName = filesCombo.getItemAt (filesCombo.getSelectedIndex()).toString();
+							fileName = filesCombo.getItemAt (filesCombo.getSelectedIndex()).toString();
 							java.util.List<String> fields = null;
 							try{
 								FormParser fparser = new FormParser(fileName+".txt");
@@ -687,10 +666,9 @@ public class MainClass  extends JFrame  {
 										+ "</tr>";
 
 
-								String[] fieldsHeader = {"Tag Name","Length", 
-										"mandatory/optional","delete after use"};
+								
 
-								String[][] fieldsData = new String[fields.size()][fieldsHeader.length];
+								fieldsData = new String[fields.size()][fieldsHeader.length];
 								int i =0,j=0,k=0;
 
 								//List<Field> fieldsList = new ArrayList<Field>();
@@ -752,7 +730,7 @@ public class MainClass  extends JFrame  {
 								}
 								text = text+"<table border='1' bgcolor='#e9ecf2'><tr style='color:#000080'>"
 										+ "<th>Structure Name</th>" 
-										+ "<th>Simplex/Duplex</th><th>Position</th></tr>" ; 
+										+ "<th>Print Settings</th></tr>" ; 
 
 								for (RLBS rlbs : rlbsList ){
 
@@ -760,26 +738,44 @@ public class MainClass  extends JFrame  {
 									if( details !=null  ) {
 										String[] parts = details.split(" ");
 										text=text+"<tr><td>"+ rlbs.getName() +"</td>"
-												+ "<td>"+parts[0]+"</td><td>"+parts[1]+"</td></tr>";
+												+ "<td>"+parts[0]+" &nbsp;"+parts[1];
+										if(parts.length >2){
+											for(int l=2;l<parts.length;l++){
+												if(!parts[l].equalsIgnoreCase("") 
+														&& !parts[l].equalsIgnoreCase(")") 
+														&& !parts[l].equalsIgnoreCase("-"))
+												text=text+" &nbsp;"+parts[l];
+											}
+										}												
+										text=text+"</td></tr>";
 									}
 								}
 								text=text+"</tbody></table></html>";
-
 								rlbsLabel.setContentType("text/html"); // let the text pane know this is what you want
 								rlbsLabel.setText(text);
 								rlbsLabel.setEditable(false); // as before
 								rlbsLabel.setBackground(null); // this is the same as a JLabel
 								rlbsLabel.setBorder(null);
+								rlbsLabel.setToolTipText("");
 								rlbsPanel.add(rlbsLabel);
-
+								rlbsPanel.repaint();
 								Popup popup1 = new Popup();
-								popup1.add(fieldsLabel);
+								popup1.add(rlbsLabel);
 
 								//JOptionPane.showMessageDialog(null, "", "Search results",
 								//JOptionPane.INFORMATION_MESSAGE);	  
 							}
 
 						}
+						
+						resetAll(edlfiles);
+						membersCombo.setModel(members);
+						filesCombo.setModel(members);
+						descCombo.setModel(description);
+						dtnCombo.setModel(dtn);
+						assignedCombo.setModel(assigned);
+						statusCombo.setModel(status);
+						
 					}catch(Exception ep){
 						ep.printStackTrace();
 						JOptionPane.showMessageDialog(mainFrame,"Unknown exception occurred, please refer log files");
@@ -795,8 +791,32 @@ public class MainClass  extends JFrame  {
 			mainFrame.repaint();
 		}
 		catch (Exception e){
-			JOptionPane.showMessageDialog(mainFrame,"File not found -- ' C:\\Temp\\EDLDUMP.txt '");
+			
+			JOptionPane.showMessageDialog(mainFrame,
+				     "Make sure you place correct files in C:\\Temp Folder \n"
+				     + "'FormsList.xlsx' \n'RLBS.txt' \nIndividual form files...",
+				     "Message!", JOptionPane.PLAIN_MESSAGE);
+			
+			StringBuilder sb = new StringBuilder(e.toString());
+		    for (StackTraceElement ste : e.getStackTrace()) {
+		        sb.append("\n\tat ");
+		        sb.append(ste);
+		    }
+		    String trace = sb.toString();
+			JOptionPane.showMessageDialog(mainFrame,
+				     "An unexpected error has occurred:\n" + e.getMessage() + '\n' +
+				     trace +  
+				     "\n\nPlease send this error to : " + "pavankumar.cheguri@infosys.com" + 
+				     "\nThanks for your help.",
+				     "Error", JOptionPane.ERROR_MESSAGE);
+			
 			e.printStackTrace();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			System.exit( 0 );  
 		}
 	}
 
@@ -814,7 +834,7 @@ public class MainClass  extends JFrame  {
 		GridBagConstraints gbc = new GridBagConstraints();
 
 		fieldsLabel = new JTextPane();
-		rlbsLabel = new JTextPane();
+		rlbsLabel = new JTextPaneTip();
 
 		fieldsPanel = new JPanel();
 		rlbsPanel = new JPanel();
@@ -878,12 +898,60 @@ public class MainClass  extends JFrame  {
 
 		referenceLink = new JLabel();
 		templateLink = new JLabel();
-		referenceLink.setText("<HTML><U><b><font color='#000080'>Sample Reference</font></b></U></HTML>");
-		templateLink.setText("<HTML><U><font color='#000080'>Template</font></U></HTML>");
+		referenceLink.setText("<HTML><U><b><font color='#000080'>Mock-up</font></b></U></HTML>");
+		templateLink.setText("<HTML><U><b><font color='#000080'>Template</font></b></U></HTML>");
 
 		referenceLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // To indicate the the link is click able
 		templateLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		
+		templateLink.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				try {
+					Desktop.getDesktop().open(new File("C:\\Temp\\Template\\"+fileName+".pdf"));
 
+				} catch (Exception e1) {
+					JOptionPane.showMessageDialog(mainFrame,"The file: C:\\Temp\\Template\\"+ fileName +".pdf doesn't exist.","Error",JOptionPane.ERROR_MESSAGE);
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		referenceLink.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				try {
+					Desktop.getDesktop().open(new File("C:\\Temp\\Mockup\\"+fileName+".pdf"));
+
+				} catch (Exception e1) {
+					JOptionPane.showMessageDialog(mainFrame,"The file: C:\\Temp\\Mockup\\"+ fileName +".pdf doesn't exist.","Error",JOptionPane.ERROR_MESSAGE);
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		
+		
+		//exportButton.setEnabled(true);
+		exportButton.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) { 
+				String file =(String) filesCombo.getItemAt
+						(filesCombo.getSelectedIndex());
+				JTable jt=new JTable(fieldsData,fieldsHeader);  
+
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setSelectedFile(new File("C:\\Temp\\Report\\"+file+"_report.xls"));
+
+				int userSelection = fileChooser.showSaveDialog(mainFrame);
+
+				if (userSelection == JFileChooser.APPROVE_OPTION) {
+					File fileToSave = fileChooser.getSelectedFile();
+					//System.out.println("Save as file: " + fileToSave.getAbsolutePath());
+					fillData(jt,fileToSave);
+				}
+			}
+		});
 
 		linksPanel = new JPanel(new GridLayout(1,3,20,10));
 
@@ -900,12 +968,11 @@ public class MainClass  extends JFrame  {
 		linksPanel.add(templateLink);
 		linksPanel.add(referenceLink);
 		linksPanel.add(exportButton);
-
 		pane.add(linksPanel, gbc);
-
+		
 		pane.setBorder(
 				BorderFactory.createCompoundBorder(
-						BorderFactory.createTitledBorder("<html><font color='#FF4500'>Form Analysis Tool</font></html>"),
+						BorderFactory.createTitledBorder(null,"<html><font color='#000080' size='4'>Form Analysis Tool</font></html>",TitledBorder.CENTER ,TitledBorder.BELOW_TOP ),
 						BorderFactory.createEmptyBorder(0,0,0,0)));
 		//pane.add(controlPanel);
 		mainFrame.add(pane);
@@ -914,6 +981,7 @@ public class MainClass  extends JFrame  {
 		mainFrame.setSize(1000,650);
 		mainFrame.setVisible(true);
 		//mainFrame.setResizable(false);
+		
 	}
 
 	/**
@@ -958,10 +1026,12 @@ public class MainClass  extends JFrame  {
 		}
 
 	}
+	
+	
 
 	private void processLinks(String fileName,String[][] fieldsData,String[] fieldsHeader){
 		linksPanel.setVisible(true);
-		templateLink.addMouseListener(new MouseAdapter() {
+		/*	templateLink.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				try {
@@ -1021,32 +1091,33 @@ public class MainClass  extends JFrame  {
 					docx.write(fos);   
 					fos.close();   
 
-					Desktop.getDesktop().open(new File("C:\\Temp\\"+fileName+"_template.docx"));
+					Desktop.getDesktop().browse(new File("C:\\Temp\\Template\\"+fileName+".pdf").toURI());
 
-				} catch (IOException e1) {
-					JOptionPane.showMessageDialog(mainFrame,"Please close the docx file and try again!","Error",JOptionPane.ERROR_MESSAGE);
+				} catch (Exception e1) {
+					JOptionPane.showMessageDialog(mainFrame,"The file: C:\\Temp\\Template\\"+ fileName +".pdf doesn't exist.","Error",JOptionPane.ERROR_MESSAGE);
 					e1.printStackTrace();
-				} catch (AWTException e1) {
-					// TODO Auto-generated catch block
+				} /*catch (AWTException e1) {
 					e1.printStackTrace();
 				}
 			}
 		});
+		
 
 		referenceLink.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				try {
-					Desktop.getDesktop().open(new File("C:\\Temp\\ref.pdf"));
-				} catch (IOException e1) {
+					Desktop.getDesktop().open(new File("C:\\Temp\\Mockup\\"+fileName+".pdf"));
+				} catch (Exception e1) {
+					JOptionPane.showMessageDialog(mainFrame,"The file: C:\\Temp\\Mockup\\"+ fileName +".pdf doesn't exist.","Error",JOptionPane.ERROR_MESSAGE);
 					e1.printStackTrace();
 				}
 			}
 		});
+		*/
 
-		JTable jt=new JTable(fieldsData,fieldsHeader);  
 		exportButton.setEnabled(true);
-		exportButton.addActionListener(new ActionListener() {
+		/*exportButton.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) { 
 				String file =(String) filesCombo.getItemAt
@@ -1059,13 +1130,13 @@ public class MainClass  extends JFrame  {
 
 				if (userSelection == JFileChooser.APPROVE_OPTION) {
 					File fileToSave = fileChooser.getSelectedFile();
-					System.out.println("Save as file: " + fileToSave.getAbsolutePath());
+					//System.out.println("Save as file: " + fileToSave.getAbsolutePath());
 					fillData(jt,fileToSave);
 				}
 			}
 		});
-
-		templateLink.setText("<HTML><U><b><font color='#000080'>"+fileName+"_Template</font></b></U></HTML>");
+*/
+		//templateLink.setText("<HTML><U><b><font color='#000080'>"+fileName+"_Template</font></b></U></HTML>");
 
 	}
 	private void resetAll(List<EDLFile> edlfiles){
@@ -1083,4 +1154,26 @@ public class MainClass  extends JFrame  {
 			}
 		}
 	}
+	
+
+	public class JTextPaneTip extends JTextPane{
+
+		@Override
+		public String getToolTipText(MouseEvent event){
+
+			String out="";
+			try {
+				//System.out.println(this.getText(Utilities.getWordStart(this ,viewToModel(event.getPoint())), Utilities.getWordEnd(this ,viewToModel(event.getPoint()))));
+				String tip = this.getDocument().getText(0, this.getDocument().getLength()).substring(Utilities.getWordStart(this ,viewToModel(event.getPoint())), Utilities.getWordEnd(this ,viewToModel(event.getPoint())));
+				out = toolTips.get(tip);
+
+			} catch (BadLocationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			return out;
+
+		}
+}
 }

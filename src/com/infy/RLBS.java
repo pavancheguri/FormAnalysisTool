@@ -11,16 +11,24 @@ public class RLBS {
 	public String getDetails(String dtn){
 
 		String stn = "";
+		String rtn = null;
 		for( String rule : rules ) {
 			String[] splits = rule.split(" ");
 			if(splits.length > 1){
 				stn = splits[0];
 				if(stn.trim().equals(dtn)){
-					return splits[1]+" "+splits[2];
+					rtn = splits[1]+" "+splits[2];
+					if(splits.length >2){
+						for(int l=3;l<splits.length;l++){
+							if(!splits[l].equalsIgnoreCase("") || !splits[l].equalsIgnoreCase(")") )
+								rtn=rtn+" "+splits[l];
+						}
+					}		
+					return rtn;
 				}
 			}
 		}
-		return null;
+		return rtn;
 	}
 	public Set<String> getRules() {
 		return rules;

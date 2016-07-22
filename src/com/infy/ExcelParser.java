@@ -63,6 +63,16 @@ public class ExcelParser {
 		return tagPosMap;
 	}
 
+	
+	public HashMap<String,String> getToolTips(){
+		XSSFSheet  sheet2 = workbook.getSheetAt(2);
+		HashMap<String,String> tipsMap = new HashMap<String,String>();
+		for (int j=1; j< sheet2.getLastRowNum() + 1; j++) {
+			Row row = sheet2.getRow(j);
+			tipsMap.put(row.getCell(0).getStringCellValue().toUpperCase(), row.getCell(1).getStringCellValue());
+		}
+		return tipsMap;
+	}
 
 	private static void log(Object aObject){
 		 System.out.println(String.valueOf(aObject));
